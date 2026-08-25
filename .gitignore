@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build plan tracker (kept local, not part of submission)
+PLAN.md
+
+# Builds
+dist/
+build/
+.next/
+out/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# TypeScript
+*.tsbuildinfo

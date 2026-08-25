@@ -1,0 +1,168 @@
+Full-Stack Engineering Assessment
+
+Overview
+The AI Travel Planner is a web application that allows users to generate a complete travel itinerary using an LLM agent. Users provide travel details such as destination, number of days, interests, and budget. The AI agent generates a day‑by‑day travel plan along with an estimated budget for the trip. Users can also modify the itinerary dynamically.
+
+Preferred Tech Stack 
+The preferred tech stack for this assessment is:
+Frontend: Next.js + Tailwind CSS
+Backend: Node.js + Express
+Database: MongoDB
+Language: JavaScript or TypeScript
+
+Application Overview
+Build a multi-user trip planner where:
+Users can register and log in
+Each user has a personalized dashboard
+Accept travel details from the user
+Generate a structured itinerary using an LLM
+Estimate the trip budget
+Allow itinerary modification
+Suggest hotels for the destination
+The application must support multiple users with strict data isolation.
+
+
+Core Requirements
+1. Authentication & Authorization
+Secure user authentication
+Authorization enforced across the application
+Protected access to user-specific features
+Users must not be able to access or modify other users’ data
+
+
+2. Trip Input Form
+     Users provide:
+Destination
+Number of days
+Budget type (Low / Medium / High)
+Interests (Food, Culture, Adventure, Shopping, etc.)
+
+
+3. AI Itinerary Generator
+The LLM agent generates a day‑by‑day itinerary based on user inputs.
+Example Output:
+Day 1
+Visit Senso‑ji Temple
+Explore Asakusa street food
+
+Day 2
+Tokyo Skytree
+Akihabara shopping
+
+
+4. Budget Estimation 
+The AI agent estimates the overall travel cost based on:
+Destination
+Number of days
+Budget preference
+Typical travel costs
+Example:
+Estimated Budget:
+Flights: $400
+Accommodation: $300
+Food: $150
+Activities: $100
+Total Estimated Budget: $950
+
+
+5. Editable Itinerary
+Users should be able to:
+Remove an activity
+Add a new activity
+Regenerate a specific day
+Example request:
+"Regenerate Day 3 with more outdoor activities"
+
+
+6. Bonus Feature
+Hotel Suggestions
+The AI agent suggests hotels based on:
+Destination
+Budget
+Popular traveler ratings
+Example:
+Recommended Hotels:
+• Hotel Sakura Tokyo – Budget Friendly
+• Shinjuku Grand Hotel – Mid Range
+• Tokyo Imperial Palace Hotel – Luxury
+
+
+7. Frontend Requirements
+Build the UI using Next.js
+Style the application using Tailwind CSS (or equivalent if stack is changed)
+Create reusable and readable components
+Focus on good UX, accessibility, and responsiveness
+
+
+8. Backend Requirements
+Implement a backend using Node.js (or equivalent if stack is changed)
+Handle errors gracefully
+Enforce authorization consistently
+Write scalable, maintainable, and readable code
+
+
+9. Code Quality
+Use JavaScript or TypeScript only
+Follow clean architecture and separation of concerns
+Use meaningful naming conventions
+Write production-quality code
+
+
+Creativity Requirement
+Add at least one custom feature of your own choice that showcases:
+Creativity
+Problem-solving ability
+Engineering judgment
+Explain why you built this feature and what problem it solves.
+
+
+Deployment (Mandatory)
+Deploy the application so it is publicly accessible
+Handle environment variables securely
+
+
+
+
+ 
+Submission Requirements
+Please submit the following:
+1. GitHub Repository
+Public GitHub repository (or access granted)
+Commit history should reflect your development process
+
+2. Deployment Link (Mandatory)
+Public URL for the deployed application
+Frontend and backend should be reachable
+
+3. Application Walkthrough Video (Mandatory)
+Record a 3–4 minute video walkthrough of your application
+The video should cover:
+Overall application flow
+Authentication and authorization
+AI agent functionality
+Custom/creative feature
+High-level design decisions
+Share video link 
+The video does not need to be polished — clarity matters more than video quality.
+
+4. README (Mandatory)
+Your README must include:
+Project overview
+Chosen tech stack (and justification if different)
+Setup instructions (local and deployed)
+High-level architecture explanation
+Authentication and authorization approach
+AI agent design and purpose
+Explanation of your creative/custom feature
+Key design decisions and trade-offs
+Known limitations (if any)
+
+Final Note to Candidate
+This assessment is not about building the perfect application.
+We are evaluating:
+How you think
+How you design systems
+How you justify technical decisions
+How you use creativity and AI responsibly
+Strong opinions, backed by reasoning, are encouraged.
+Surprise us!.

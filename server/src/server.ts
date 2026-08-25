@@ -1,7 +1,7 @@
 import { createApp } from "./app.js";
 import { env } from "./config/env.js";
+import { logger } from "./config/logger.js";
 import { connectDatabase, disconnectDatabase } from "./config/db.js";
-import { logger } from "./utils/logger.js";
 
 async function main(): Promise<void> {
   await connectDatabase(env.MONGODB_URI);
@@ -27,6 +27,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  logger.error("Fatal startup error:", err);
+  logger.error({ err }, "Fatal startup error");
   process.exit(1);
 });

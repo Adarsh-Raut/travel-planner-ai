@@ -1,6 +1,11 @@
 import bcrypt from "bcryptjs";
-import { User, type PublicUser, toPublicUser } from "../models/user.model.js";
-import type { RegisterDto } from "../validators/auth.validators.js";
+import {
+  User,
+  type PublicUser,
+  type UserDocument,
+  toPublicUser,
+} from "../models/user.model.js";
+import type { LoginDto, RegisterDto } from "../validators/auth.validators.js";
 import { HttpError } from "../utils/http-error.js";
 
 const BCRYPT_SALT_ROUNDS = 12;
@@ -39,3 +44,29 @@ export async function registerUser(dto: RegisterDto): Promise<PublicUser> {
     throw err;
   }
 }
+
+export async function loginUser(dto: LoginDto): Promise<UserDocument> {
+  // Same generic error for unknown email and wrong password to prevent
+  // user enumeration.
+  const invalidCredentials = new HttpError(
+    401,
+    "INVALID_CREDENTIALS",
+    "Invalid email or password",
+  );
+
+  const user = await User.findOne({ email: dto.email });
+  if (!user) throw invalidCredentials;
+
+  const passwordMatches = await bcrypt.compare(dto.password, user.passwordHash);
+  if (!passwordMatches) throw invalidCredentials;
+
+  return user;
+}
+
+export async function getUserById(id: string): Promise<PublicUser | null> {
+  const user = await User.findById(id);
+  return user ? toPublicUser(user) : null;
+}
+
+export { toPublicUser };
+

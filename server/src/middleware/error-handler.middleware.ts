@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { HttpError } from "../utils/http-error.js";
-import { logger } from "../utils/logger.js";
+import { logger } from "../config/logger.js";
 
 interface ErrorBody {
   error: {
@@ -25,7 +25,7 @@ export function errorHandler(
     return;
   }
 
-  logger.error("Unhandled error:", err);
+  logger.error({ err }, "Unhandled error");
 
   res.status(500).json({
     error: {

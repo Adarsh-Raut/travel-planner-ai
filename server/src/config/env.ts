@@ -10,6 +10,7 @@ const envSchema = z.object({
     .string()
     .regex(/^\d+[smhdw]$/, "JWT_EXPIRES_IN must look like '7d', '12h', etc.")
     .default("7d"),
+  CLIENT_ORIGIN: z.url().default("http://localhost:3000"),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -1,11 +1,13 @@
 import express, { type Express } from "express";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import { pinoHttp } from "pino-http";
 import { healthRouter } from "./routes/health.routes.js";
 import { authRouter } from "./routes/auth.routes.js";
 import { notFoundHandler } from "./middleware/not-found.middleware.js";
 import { errorHandler } from "./middleware/error-handler.middleware.js";
 import { logger } from "./config/logger.js";
+import { env } from "./config/env.js";
 
 export function createApp(): Express {
   const app = express();
@@ -20,6 +22,13 @@ export function createApp(): Express {
       autoLogging: {
         ignore: (req) => req.url === "/health",
       },
+    }),
+  );
+
+  app.use(
+    cors({
+      origin: env.CLIENT_ORIGIN,
+      credentials: true,
     }),
   );
 

@@ -79,5 +79,81 @@ export function useTrip(tripId: string) {
     }
   }, [tripId]);
 
-  return { trip, loading, error, generating, generate };
+  const [mutationError, setMutationError] = useState<string | null>(null);
+
+  const addActivity = useCallback(
+    async (dayNumber: number, title: string): Promise<boolean> => {
+      setMutationError(null);
+      try {
+        const { data } = await api<{ data: { trip: Trip } }>(
+          `/api/trips/${tripId}/days/${dayNumber}/activities`,
+          { method: "POST", body: { title } },
+        );
+        setTrip(data.trip);
+        return true;
+      } catch (err) {
+        setMutationError(
+          err instanceof ApiError ? err.message : "Could not add the activity.",
+        );
+        return false;
+      }
+    },
+    [tripId],
+  );
+
+  const removeActivity = useCallback(
+    async (dayNumber: number, activityId: string): Promise<boolean> => {
+      setMutationError(null);
+      try {
+        const { data } = await api<{ data: { trip: Trip } }>(
+          `/api/trips/${tripId}/days/${dayNumber}/activities/${activityId}`,
+          { method: "DELETE" },
+        );
+        setTrip(data.trip);
+        return true;
+      } catch (err) {
+        setMutationError(
+          err instanceof ApiError
+            ? err.message
+            : "Could not remove the activity.",
+        );
+        return false;
+      }
+    },
+    [tripId],
+  );
+
+  const regenerateDay = useCallback(
+    async (dayNumber: number, instruction?: string): Promise<boolean> => {
+      setMutationError(null);
+      try {
+        const { data } = await api<{ data: { trip: Trip } }>(
+          `/api/trips/${tripId}/days/${dayNumber}/regenerate`,
+          { method: "POST", body: instruction ? { instruction } : {} },
+        );
+        setTrip(data.trip);
+        return true;
+      } catch (err) {
+        setMutationError(
+          err instanceof ApiError
+            ? err.message
+            : "Could not regenerate this day.",
+        );
+        return false;
+      }
+    },
+    [tripId],
+  );
+
+  return {
+    trip,
+    loading,
+    error,
+    generating,
+    generate,
+    mutationError,
+    addActivity,
+    removeActivity,
+    regenerateDay,
+  };
 }

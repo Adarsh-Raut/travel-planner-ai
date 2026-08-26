@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Loader2, Sparkles, TriangleAlert } from "lucide-react";
@@ -8,6 +9,7 @@ import { TripHeader } from "@/components/trip/trip-header";
 import { DayCard } from "@/components/trip/day-card";
 import { BudgetCard } from "@/components/trip/budget-card";
 import { HotelsSection } from "@/components/trip/hotels-section";
+import { RegenerateDayDialog } from "@/components/trip/regenerate-day-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,7 +22,52 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function TripDetailPage() {
   const params = useParams<{ id: string }>();
-  const { trip, loading, error, generating, generate } = useTrip(params.id);
+  const {
+    trip,
+    loading,
+    error,
+    generating,
+    generate,
+    mutationError,
+    addActivity,
+    removeActivity,
+    regenerateDay,
+  } = useTrip(params.id);
+
+  const [addingDay, setAddingDay] = useState<number | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [dialogDay, setDialogDay] = useState<number | null>(null);
+  const [regeneratingDay, setRegeneratingDay] = useState<number | null>(null);
+
+  async function handleAdd(dayNumber: number, title: string): Promise<boolean> {
+    setAddingDay(dayNumber);
+    try {
+      return await addActivity(dayNumber, title);
+    } finally {
+      setAddingDay(null);
+    }
+  }
+
+  async function handleRemove(dayNumber: number, activityId: string): Promise<boolean> {
+    setRemovingId(activityId);
+    try {
+      return await removeActivity(dayNumber, activityId);
+    } finally {
+      setRemovingId(null);
+    }
+  }
+
+  async function handleRegenerate(
+    dayNumber: number,
+    instruction?: string,
+  ): Promise<boolean> {
+    setRegeneratingDay(dayNumber);
+    try {
+      return await regenerateDay(dayNumber, instruction);
+    } finally {
+      setRegeneratingDay(null);
+    }
+  }
 
   if (loading) {
     return (
@@ -78,8 +125,22 @@ export default function TripDetailPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <section aria-label="Itinerary" className="space-y-4">
           {trip.itinerary.map((day) => (
-            <DayCard key={day.day} day={day} />
+            <DayCard
+              key={day.day}
+              day={day}
+              onRegenerate={(dayNumber) => setDialogDay(dayNumber)}
+              regeneratePending={regeneratingDay === day.day}
+              onAddActivity={handleAdd}
+              onRemoveActivity={handleRemove}
+              addPending={addingDay === day.day}
+              removingId={removingId}
+            />
           ))}
+          {mutationError ? (
+            <p role="alert" className="text-sm text-destructive">
+              {mutationError}
+            </p>
+          ) : null}
         </section>
 
         <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start" aria-label="Budget and hotels">
@@ -87,6 +148,13 @@ export default function TripDetailPage() {
           <HotelsSection hotels={trip.hotels} />
         </aside>
       </div>
+
+      <RegenerateDayDialog
+        dayNumber={dialogDay}
+        pending={regeneratingDay !== null}
+        onSubmit={handleRegenerate}
+        onClose={() => setDialogDay(null)}
+      />
     </main>
   );
 }

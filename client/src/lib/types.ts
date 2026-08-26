@@ -7,6 +7,7 @@ export interface PublicUser {
 
 export type BudgetType = "low" | "medium" | "high";
 export type TripStatus = "draft" | "generating" | "ready" | "failed";
+export type HotelTier = "budget" | "mid_range" | "luxury";
 
 export interface Activity {
   id: string;
@@ -31,7 +32,7 @@ export interface BudgetBreakdown {
 
 export interface HotelSuggestion {
   name: string;
-  tier: "budget" | "mid_range" | "luxury";
+  tier: HotelTier;
   note?: string;
 }
 

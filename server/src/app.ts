@@ -4,6 +4,7 @@ import cors from "cors";
 import { pinoHttp } from "pino-http";
 import { healthRouter } from "./routes/health.routes.js";
 import { authRouter } from "./routes/auth.routes.js";
+import { tripRouter } from "./routes/trip.routes.js";
 import { notFoundHandler } from "./middleware/not-found.middleware.js";
 import { errorHandler } from "./middleware/error-handler.middleware.js";
 import { logger } from "./config/logger.js";
@@ -37,6 +38,7 @@ export function createApp(): Express {
 
   app.use("/health", healthRouter);
   app.use("/api/auth", authRouter);
+  app.use("/api/trips", tripRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

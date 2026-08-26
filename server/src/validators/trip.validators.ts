@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const createTripSchema = z.object({
+const tripInputFields = {
   destination: z.string().trim().min(1, "Destination is required").max(100),
   days: z.coerce
     .number()
@@ -13,7 +13,24 @@ export const createTripSchema = z.object({
     .min(1, "Pick at least one interest")
     .max(8, "At most 8 interests")
     .transform((items) => [...new Set(items)]),
+} as const;
+
+export const createTripSchema = z.object({
+  ...tripInputFields,
   title: z.string().trim().max(120).optional(),
 });
 
+export const updateTripSchema = z
+  .object({
+    destination: tripInputFields.destination.optional(),
+    days: tripInputFields.days.optional(),
+    budgetType: tripInputFields.budgetType.optional(),
+    interests: tripInputFields.interests.optional(),
+    title: z.string().trim().max(120).optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "Provide at least one field to update",
+  });
+
 export type CreateTripDto = z.infer<typeof createTripSchema>;
+export type UpdateTripDto = z.infer<typeof updateTripSchema>;

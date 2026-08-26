@@ -10,12 +10,14 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "lint": "eslint src",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:llm": "tsx scripts/test-gemini.ts"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
+    "@google/genai": "^2.19.0",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",

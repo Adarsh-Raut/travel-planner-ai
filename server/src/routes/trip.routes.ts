@@ -9,6 +9,8 @@ import {
   regenerateTripDay,
   addActivity,
   removeActivity,
+  shareTrip,
+  unshareTrip,
 } from "../controllers/trip.controller.js";
 import { requireAuth } from "../middleware/require-auth.middleware.js";
 
@@ -25,3 +27,5 @@ tripRouter.post("/:id/generate", generateTrip);
 tripRouter.post("/:id/days/:day/regenerate", regenerateTripDay);
 tripRouter.post("/:id/days/:day/activities", addActivity);
 tripRouter.delete("/:id/days/:day/activities/:activityId", removeActivity);
+tripRouter.post("/:id/share", shareTrip);
+tripRouter.delete("/:id/share", unshareTrip);

@@ -47,6 +47,7 @@ export interface Trip {
   itinerary: ItineraryDay[];
   budget?: BudgetBreakdown;
   hotels: HotelSuggestion[];
+  isShared: boolean;
   createdAt: string;
   updatedAt: string;
 }

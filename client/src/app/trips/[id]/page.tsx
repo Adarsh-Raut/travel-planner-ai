@@ -10,6 +10,7 @@ import { DayCard } from "@/components/trip/day-card";
 import { BudgetCard } from "@/components/trip/budget-card";
 import { HotelsSection } from "@/components/trip/hotels-section";
 import { RegenerateDayDialog } from "@/components/trip/regenerate-day-dialog";
+import { ShareDialog } from "@/components/trip/share-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -32,12 +33,17 @@ export default function TripDetailPage() {
     addActivity,
     removeActivity,
     regenerateDay,
+    shareTrip,
+    revokeShare,
   } = useTrip(params.id);
 
   const [addingDay, setAddingDay] = useState<number | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [dialogDay, setDialogDay] = useState<number | null>(null);
   const [regeneratingDay, setRegeneratingDay] = useState<number | null>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareCreating, setShareCreating] = useState(false);
+  const [shareRevoking, setShareRevoking] = useState(false);
 
   async function handleAdd(dayNumber: number, title: string): Promise<boolean> {
     setAddingDay(dayNumber);
@@ -67,6 +73,32 @@ export default function TripDetailPage() {
     } finally {
       setRegeneratingDay(null);
     }
+  }
+
+  async function handleOpenShare() {
+    setShareCreating(true);
+    try {
+      const token = await shareTrip();
+      setShareUrl(token ? `${window.location.origin}/share/${token}` : null);
+    } finally {
+      setShareCreating(false);
+    }
+  }
+
+  function handleRevokeShare() {
+    void (async () => {
+      setShareRevoking(true);
+      const ok = await revokeShare();
+      setShareRevoking(false);
+      if (ok) {
+        setShareUrl(null);
+        onCloseShare();
+      }
+    })();
+  }
+
+  function onCloseShare() {
+    setShareUrl(null);
   }
 
   if (loading) {
@@ -120,7 +152,7 @@ export default function TripDetailPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 p-6">
-      <TripHeader trip={trip} />
+      <TripHeader trip={trip} onShare={() => void handleOpenShare()} />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <section aria-label="Itinerary" className="space-y-4">
@@ -154,6 +186,16 @@ export default function TripDetailPage() {
         pending={regeneratingDay !== null}
         onSubmit={handleRegenerate}
         onClose={() => setDialogDay(null)}
+      />
+
+      <ShareDialog
+        url={shareUrl}
+        creating={shareCreating}
+        revoking={shareRevoking}
+        isShared={trip.isShared}
+        onCreate={() => void handleOpenShare()}
+        onRevoke={handleRevokeShare}
+        onClose={onCloseShare}
       />
     </main>
   );

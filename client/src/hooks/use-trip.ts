@@ -145,6 +145,41 @@ export function useTrip(tripId: string) {
     [tripId],
   );
 
+  const shareTrip = useCallback(async (): Promise<string | null> => {
+    setMutationError(null);
+    try {
+      const { data } = await api<{ data: { token: string } }>(
+        `/api/trips/${tripId}/share`,
+        { method: "POST" },
+      );
+      void fetchTrip(tripId)
+        .then((current) => setTrip(current))
+        .catch(() => undefined);
+      return data.token;
+    } catch (err) {
+      setMutationError(
+        err instanceof ApiError ? err.message : "Could not create a share link.",
+      );
+      return null;
+    }
+  }, [tripId]);
+
+  const revokeShare = useCallback(async (): Promise<boolean> => {
+    setMutationError(null);
+    try {
+      await api(`/api/trips/${tripId}/share`, { method: "DELETE" });
+      void fetchTrip(tripId)
+        .then((current) => setTrip(current))
+        .catch(() => undefined);
+      return true;
+    } catch (err) {
+      setMutationError(
+        err instanceof ApiError ? err.message : "Could not revoke the link.",
+      );
+      return false;
+    }
+  }, [tripId]);
+
   return {
     trip,
     loading,
@@ -155,5 +190,7 @@ export function useTrip(tripId: string) {
     addActivity,
     removeActivity,
     regenerateDay,
+    shareTrip,
+    revokeShare,
   };
 }

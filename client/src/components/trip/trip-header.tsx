@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, MapPin } from "lucide-react";
 import type { Trip, TripStatus } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const STATUS_LABEL: Record<TripStatus, string> = {
   draft: "Draft",
@@ -25,7 +26,12 @@ const BUDGET_LABEL = {
   high: "Luxury",
 } as const;
 
-export function TripHeader({ trip }: { trip: Trip }) {
+interface TripHeaderProps {
+  trip: Trip;
+  onShare?: () => void;
+}
+
+export function TripHeader({ trip, onShare }: TripHeaderProps) {
   return (
     <div className="mb-6">
       <Link
@@ -36,11 +42,18 @@ export function TripHeader({ trip }: { trip: Trip }) {
         Your trips
       </Link>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h1 className="text-2xl font-bold tracking-tight">
-          {trip.title ?? trip.destination}
-        </h1>
-        <Badge variant={STATUS_VARIANT[trip.status]}>{STATUS_LABEL[trip.status]}</Badge>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <h1 className="text-2xl font-bold tracking-tight">
+            {trip.title ?? trip.destination}
+          </h1>
+          <Badge variant={STATUS_VARIANT[trip.status]}>{STATUS_LABEL[trip.status]}</Badge>
+        </div>
+        {onShare && trip.status === "ready" ? (
+          <Button variant="outline" size="sm" onClick={onShare}>
+            {trip.isShared ? "Share settings" : "Share"}
+          </Button>
+        ) : null}
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">

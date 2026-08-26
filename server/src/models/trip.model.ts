@@ -42,6 +42,7 @@ export interface TripDocument extends mongoose.Document {
   itinerary: ItineraryDay[];
   budget?: BudgetBreakdown;
   hotels: HotelSuggestion[];
+  shareToken?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -110,6 +111,7 @@ const tripSchema = new Schema<TripDocument>(
     itinerary: { type: [itineraryDaySchema], default: [] },
     budget: { type: budgetSchema, default: undefined },
     hotels: { type: [hotelSchema], default: [] },
+    shareToken: { type: String, index: true, unique: true, sparse: true },
   },
   { timestamps: true },
 );
@@ -125,6 +127,7 @@ export interface PublicTrip {
   itinerary: ItineraryDay[];
   budget?: BudgetBreakdown;
   hotels: HotelSuggestion[];
+  isShared: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -141,6 +144,7 @@ export function toPublicTrip(trip: TripDocument): PublicTrip {
     itinerary: trip.itinerary,
     ...(trip.budget ? { budget: trip.budget } : {}),
     hotels: trip.hotels,
+    isShared: Boolean(trip.shareToken),
     createdAt: trip.createdAt,
     updatedAt: trip.updatedAt,
   };

@@ -99,3 +99,23 @@ export async function removeActivity(req: Request, res: Response): Promise<void>
   );
   res.json({ data: { trip } });
 }
+
+export async function shareTrip(req: Request, res: Response): Promise<void> {
+  const userId = requireUserId(req);
+  const result = await tripService.enableSharing(
+    userId,
+    requirePathParam(req, "id"),
+  );
+  res.json({ data: result });
+}
+
+export async function unshareTrip(req: Request, res: Response): Promise<void> {
+  const userId = requireUserId(req);
+  await tripService.revokeSharing(userId, requirePathParam(req, "id"));
+  res.json({ data: { success: true } });
+}
+
+export async function getSharedTrip(req: Request, res: Response): Promise<void> {
+  const view = await tripService.getSharedTrip(requirePathParam(req, "token"));
+  res.json({ data: { trip: view } });
+}

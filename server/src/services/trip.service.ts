@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import {
   Trip,
   toPublicTrip,
@@ -253,4 +253,71 @@ export async function removeActivity(
   await trip.save();
 
   return toPublicTrip(trip);
+}
+
+export interface SharedTripView {
+  destination: string;
+  days: number;
+  budgetType: string;
+  interests: string[];
+  title?: string;
+  itinerary: ItineraryDay[];
+  budget?: PublicTrip["budget"];
+  hotels: TripDocument["hotels"];
+  ownerName?: string;
+}
+
+const SHARE_NOT_FOUND = new HttpError(
+  404,
+  "SHARE_NOT_FOUND",
+  "This shared trip does not exist or is no longer available",
+);
+
+export async function enableSharing(
+  userId: string,
+  tripId: string,
+): Promise<{ token: string }> {
+  assertValidTripId(tripId);
+  const trip = await Trip.findOne({ _id: tripId, user: userId });
+  if (!trip) throw TRIP_NOT_FOUND;
+  if (trip.status !== "ready") {
+    throw new HttpError(409, "TRIP_NOT_READY", "Only generated trips can be shared");
+  }
+
+  if (!trip.shareToken) {
+    trip.shareToken = randomBytes(24).toString("base64url");
+    await trip.save();
+  }
+
+  return { token: trip.shareToken };
+}
+
+export async function revokeSharing(userId: string, tripId: string): Promise<void> {
+  assertValidTripId(tripId);
+  await Trip.updateOne(
+    { _id: tripId, user: userId },
+    { $unset: { shareToken: 1 } },
+  );
+}
+
+export async function getSharedTrip(token: string): Promise<SharedTripView> {
+  const trip = await Trip.findOne({ shareToken: token, status: "ready" })
+    .populate("user", "name")
+    .select("-user -shareToken -status -createdAt -updatedAt");
+
+  if (!trip) throw SHARE_NOT_FOUND;
+
+  const ownerName = (trip.user as { name?: string } | null)?.name;
+
+  return {
+    destination: trip.destination,
+    days: trip.days,
+    budgetType: trip.budgetType,
+    interests: trip.interests,
+    ...(trip.title ? { title: trip.title } : {}),
+    itinerary: trip.itinerary,
+    ...(trip.budget ? { budget: trip.budget } : {}),
+    hotels: trip.hotels,
+    ...(ownerName ? { ownerName: ownerName.split(" ")[0] ?? ownerName } : {}),
+  };
 }

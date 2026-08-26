@@ -18,6 +18,11 @@ export interface GeneratedTrip {
   hotels: HotelSuggestion[];
 }
 
+export interface GenerationResult {
+  trip: GeneratedTrip;
+  servedBy: string;
+}
+
 export interface LlmProvider {
   readonly name: string;
   generateTrip(input: TripGenerationInput): Promise<GeneratedTrip>;

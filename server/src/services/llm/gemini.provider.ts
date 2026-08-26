@@ -1,17 +1,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { env } from "../../config/env.js";
 import { ProviderError } from "./provider-error.js";
+import { buildUserPrompt, SYSTEM_INSTRUCTION } from "./prompts.js";
 import { generatedTripSchema, normalizeGeneratedTrip } from "./trip-schema.js";
 import type { GeneratedTrip, LlmProvider, TripGenerationInput } from "./types.js";
-
-const SYSTEM_INSTRUCTION = `You are an expert local travel planner.
-Given a destination, trip length, budget tier and interests, you produce realistic day-by-day plans:
-- Cluster activities by neighbourhood each day to minimise back-and-forth travel.
-- Weave the requested interests into every day where possible.
-- Order activities within a day from morning to evening.
-- Cost estimates must match the budget tier and reflect typical prices at the destination, in USD.
-- Suggest exactly one hotel per tier: budget, mid_range and luxury, each with a one-sentence note about location or standout feature.
-- Stay strictly within the requested number of days.`;
 
 const RESPONSE_SCHEMA = {
   type: Type.OBJECT,
@@ -73,15 +65,6 @@ const RESPONSE_SCHEMA = {
   propertyOrdering: ["itinerary", "budget", "hotels"],
 } as const;
 
-function buildUserPrompt(input: TripGenerationInput): string {
-  return [
-    `Plan a ${input.days}-day trip to ${input.destination}.`,
-    `Budget tier: ${input.budgetType}.`,
-    `Interests: ${input.interests.join(", ")}.`,
-    `Return exactly ${input.days} days, numbered 1 to ${input.days}.`,
-  ].join(" ");
-}
-
 export class GeminiProvider implements LlmProvider {
   readonly name = "gemini";
 
@@ -116,14 +99,16 @@ export class GeminiProvider implements LlmProvider {
       const parsed = generatedTripSchema.parse(JSON.parse(rawText));
       return normalizeGeneratedTrip(parsed, input);
     } catch (err) {
-      const detail = err instanceof SyntaxError
-        ? "Response was not valid JSON"
-        : err instanceof Error && err.name === "ZodError"
-          ? "Response did not match the trip schema"
-          : err instanceof Error
-            ? err.message
-            : "Unknown error";
-      throw new ProviderError(this.name, `Trip generation failed: ${detail}`);
+      throw new ProviderError(this.name, describeError(err));
     }
   }
+}
+
+export function describeError(err: unknown): string {
+  if (err instanceof SyntaxError) return "Response was not valid JSON";
+  if (err instanceof Error && err.name === "ZodError") {
+    return "Response did not match the trip schema";
+  }
+  if (err instanceof Error) return err.message;
+  return "Unknown error";
 }

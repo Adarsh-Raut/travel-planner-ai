@@ -13,6 +13,8 @@ const envSchema = z.object({
   CLIENT_ORIGIN: z.url().default("http://localhost:3000"),
   GEMINI_API_KEY: z.string().min(1).optional(),
   GEMINI_MODEL: z.string().min(1).default("gemini-3.5-flash-lite"),
+  GROQ_API_KEY: z.string().min(1).optional(),
+  GROQ_MODEL: z.string().min(1).default("openai/gpt-oss-120b"),
 });
 
 const parsed = envSchema.safeParse(process.env);

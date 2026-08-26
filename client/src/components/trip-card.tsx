@@ -49,16 +49,16 @@ export function TripCard({ trip, onDelete, deletePending }: TripCardProps) {
   const hiddenInterests = Math.max(0, trip.interests.length - MAX_SHOWN_INTERESTS);
 
   return (
-    <Card className="flex h-full flex-col transition-shadow hover:shadow-md">
-      <CardHeader>
+    <Card className="relative flex h-full flex-col transition-shadow hover:shadow-md">
+      <Link
+        href={`/trips/${trip.id}`}
+        aria-label={`Open trip ${trip.title ?? trip.destination}`}
+        className="absolute inset-0 rounded-xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      />
+      <CardHeader className="relative">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg leading-snug">
-            <Link
-              href={`/trips/${trip.id}`}
-              className="underline-offset-4 hover:underline"
-            >
-              {trip.title ?? trip.destination}
-            </Link>
+            {trip.title ?? trip.destination}
           </CardTitle>
           <Badge variant={trip.status === "ready" ? "default" : "secondary"}>
             {STATUS_LABEL[trip.status]}
@@ -88,7 +88,7 @@ export function TripCard({ trip, onDelete, deletePending }: TripCardProps) {
         </div>
       </CardContent>
 
-      <CardFooter className="justify-between">
+      <CardFooter className="relative justify-between">
         <span className="text-xs text-muted-foreground">
           Created{" "}
           {new Date(trip.createdAt).toLocaleDateString(undefined, {

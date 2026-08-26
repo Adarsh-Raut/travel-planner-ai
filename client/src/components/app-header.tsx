@@ -17,7 +17,10 @@ export function AppHeader() {
   return (
     <header className="border-b">
       <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-4">
-        <Link href="/" className="text-lg font-bold tracking-tight hover:opacity-80">
+        <Link
+          href={status === "authenticated" ? "/dashboard" : "/"}
+          className="text-lg font-bold tracking-tight hover:opacity-80"
+        >
           AI Travel Planner
         </Link>
 

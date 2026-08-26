@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import type { BudgetType, Trip } from "@/lib/types";
@@ -42,6 +43,7 @@ interface NewTripDialogProps {
 }
 
 export function NewTripDialog({ onCreated }: NewTripDialogProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [destination, setDestination] = useState("");
   const [days, setDays] = useState("5");
@@ -101,6 +103,7 @@ export function NewTripDialog({ onCreated }: NewTripDialogProps) {
       onCreated(data.trip);
       setOpen(false);
       resetForm();
+      router.push(`/trips/${data.trip.id}`);
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : "Could not create the trip. Please try again.",

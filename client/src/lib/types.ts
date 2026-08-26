@@ -5,6 +5,51 @@ export interface PublicUser {
   createdAt: string;
 }
 
+export type BudgetType = "low" | "medium" | "high";
+export type TripStatus = "draft" | "generating" | "ready" | "failed";
+
+export interface Activity {
+  id: string;
+  title: string;
+  description?: string;
+  category?: string;
+}
+
+export interface ItineraryDay {
+  day: number;
+  activities: Activity[];
+}
+
+export interface BudgetBreakdown {
+  currency: string;
+  flights: number;
+  accommodation: number;
+  food: number;
+  activities: number;
+  total: number;
+}
+
+export interface HotelSuggestion {
+  name: string;
+  tier: "budget" | "mid_range" | "luxury";
+  note?: string;
+}
+
+export interface Trip {
+  id: string;
+  destination: string;
+  days: number;
+  budgetType: BudgetType;
+  interests: string[];
+  title?: string;
+  status: TripStatus;
+  itinerary: ItineraryDay[];
+  budget?: BudgetBreakdown;
+  hotels: HotelSuggestion[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ValidationIssue {
   path: string;
   message: string;

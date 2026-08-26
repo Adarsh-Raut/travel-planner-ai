@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import {
+  createActivitySchema,
   createTripSchema,
   regenerateDaySchema,
   updateTripSchema,
@@ -72,6 +73,29 @@ export async function regenerateTripDay(req: Request, res: Response): Promise<vo
     requirePathParam(req, "id"),
     requirePathParam(req, "day"),
     dto,
+  );
+  res.json({ data: { trip } });
+}
+
+export async function addActivity(req: Request, res: Response): Promise<void> {
+  const userId = requireUserId(req);
+  const dto = parseBody(createActivitySchema, req.body ?? {});
+  const trip = await tripService.addActivity(
+    userId,
+    requirePathParam(req, "id"),
+    requirePathParam(req, "day"),
+    dto,
+  );
+  res.status(201).json({ data: { trip } });
+}
+
+export async function removeActivity(req: Request, res: Response): Promise<void> {
+  const userId = requireUserId(req);
+  const trip = await tripService.removeActivity(
+    userId,
+    requirePathParam(req, "id"),
+    requirePathParam(req, "day"),
+    requirePathParam(req, "activityId"),
   );
   res.json({ data: { trip } });
 }

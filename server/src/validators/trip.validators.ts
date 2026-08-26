@@ -45,3 +45,11 @@ export const regenerateDaySchema = z.object({
 });
 
 export type RegenerateDayDto = z.infer<typeof regenerateDaySchema>;
+
+export const createActivitySchema = z.object({
+  title: z.string().trim().min(1, "Activity title is required").max(160),
+  description: z.string().trim().max(500).optional(),
+  category: z.string().trim().max(40).optional(),
+});
+
+export type CreateActivityDto = z.infer<typeof createActivitySchema>;

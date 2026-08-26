@@ -1,11 +1,14 @@
 import mongoose from "mongoose";
+import { randomUUID } from "node:crypto";
 import {
   Trip,
   toPublicTrip,
+  type ItineraryDay,
   type PublicTrip,
   type TripDocument,
 } from "../models/trip.model.js";
 import type {
+  CreateActivityDto,
   CreateTripDto,
   RegenerateDayDto,
   UpdateTripDto,
@@ -23,6 +26,36 @@ const INPUT_FIELD_NAMES = ["destination", "days", "budgetType", "interests"] as 
 function assertValidTripId(id: string): void {
   // Foreign or missing trips both surface as 404 so callers cannot probe ids.
   if (!mongoose.isValidObjectId(id)) throw TRIP_NOT_FOUND;
+}
+
+async function findReadyTripDay(
+  userId: string,
+  tripId: string,
+  dayParam: string,
+): Promise<{ trip: TripDocument; dayEntry: ItineraryDay }> {
+  assertValidTripId(tripId);
+
+  const dayNumber = Number(dayParam);
+  if (!Number.isInteger(dayNumber) || dayNumber < 1) {
+    throw new HttpError(400, "BAD_REQUEST", "Day must be a positive whole number");
+  }
+
+  const trip = await Trip.findOne({ _id: tripId, user: userId });
+  if (!trip) throw TRIP_NOT_FOUND;
+  if (trip.status !== "ready") {
+    throw new HttpError(
+      409,
+      "TRIP_NOT_READY",
+      "Generate the itinerary before editing individual days",
+    );
+  }
+
+  const dayEntry = trip.itinerary.find((day) => day.day === dayNumber);
+  if (!dayEntry) {
+    throw new HttpError(404, "DAY_NOT_FOUND", `Trip has no day ${dayNumber}`);
+  }
+
+  return { trip, dayEntry };
 }
 
 export async function createTrip(
@@ -145,27 +178,8 @@ export async function regenerateTripDay(
   dayParam: string,
   dto: RegenerateDayDto,
 ): Promise<PublicTrip> {
-  assertValidTripId(tripId);
-
-  const dayNumber = Number(dayParam);
-  if (!Number.isInteger(dayNumber) || dayNumber < 1) {
-    throw new HttpError(400, "BAD_REQUEST", "Day must be a positive whole number");
-  }
-
-  const trip = await Trip.findOne({ _id: tripId, user: userId });
-  if (!trip) throw TRIP_NOT_FOUND;
-  if (trip.status !== "ready") {
-    throw new HttpError(
-      409,
-      "TRIP_NOT_READY",
-      "Generate the itinerary before editing individual days",
-    );
-  }
-
-  const dayEntry = trip.itinerary.find((day) => day.day === dayNumber);
-  if (!dayEntry) {
-    throw new HttpError(404, "DAY_NOT_FOUND", `Trip has no day ${dayNumber}`);
-  }
+  const { trip, dayEntry } = await findReadyTripDay(userId, tripId, dayParam);
+  const dayNumber = dayEntry.day;
 
   const { result, servedBy } = await llmService.generateDay({
     destination: trip.destination,
@@ -188,5 +202,55 @@ export async function regenerateTripDay(
     { tripId, servedBy, day: dayNumber },
     "Day regenerated",
   );
+  return toPublicTrip(trip);
+}
+
+const MAX_ACTIVITIES_PER_DAY = 10;
+
+export async function addActivity(
+  userId: string,
+  tripId: string,
+  dayParam: string,
+  dto: CreateActivityDto,
+): Promise<PublicTrip> {
+  const { trip, dayEntry } = await findReadyTripDay(userId, tripId, dayParam);
+
+  if (dayEntry.activities.length >= MAX_ACTIVITIES_PER_DAY) {
+    throw new HttpError(
+      422,
+      "DAY_FULL",
+      `A day can hold at most ${MAX_ACTIVITIES_PER_DAY} activities`,
+    );
+  }
+
+  dayEntry.activities.push({
+    id: randomUUID(),
+    title: dto.title,
+    ...(dto.description ? { description: dto.description } : {}),
+    ...(dto.category ? { category: dto.category } : {}),
+  });
+  await trip.save();
+
+  return toPublicTrip(trip);
+}
+
+export async function removeActivity(
+  userId: string,
+  tripId: string,
+  dayParam: string,
+  activityId: string,
+): Promise<PublicTrip> {
+  const { trip, dayEntry } = await findReadyTripDay(userId, tripId, dayParam);
+
+  const index = dayEntry.activities.findIndex(
+    (activity) => activity.id === activityId,
+  );
+  if (index === -1) {
+    throw new HttpError(404, "ACTIVITY_NOT_FOUND", "Activity not found");
+  }
+
+  dayEntry.activities.splice(index, 1);
+  await trip.save();
+
   return toPublicTrip(trip);
 }

@@ -50,3 +50,12 @@ export async function deleteTrip(req: Request, res: Response): Promise<void> {
   await tripService.deleteTrip(userId, requirePathParam(req, "id"));
   res.json({ data: { success: true } });
 }
+
+export async function generateTrip(req: Request, res: Response): Promise<void> {
+  const userId = requireUserId(req);
+  const trip = await tripService.generateTripContent(
+    userId,
+    requirePathParam(req, "id"),
+  );
+  res.json({ data: { trip } });
+}

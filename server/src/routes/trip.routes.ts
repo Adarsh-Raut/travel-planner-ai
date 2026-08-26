@@ -6,6 +6,7 @@ import {
   updateTrip,
   deleteTrip,
   generateTrip,
+  regenerateTripDay,
 } from "../controllers/trip.controller.js";
 import { requireAuth } from "../middleware/require-auth.middleware.js";
 
@@ -19,3 +20,4 @@ tripRouter.get("/:id", getTrip);
 tripRouter.patch("/:id", updateTrip);
 tripRouter.delete("/:id", deleteTrip);
 tripRouter.post("/:id/generate", generateTrip);
+tripRouter.post("/:id/days/:day/regenerate", regenerateTripDay);

@@ -5,7 +5,11 @@ import {
   type PublicTrip,
   type TripDocument,
 } from "../models/trip.model.js";
-import type { CreateTripDto, UpdateTripDto } from "../validators/trip.validators.js";
+import type {
+  CreateTripDto,
+  RegenerateDayDto,
+  UpdateTripDto,
+} from "../validators/trip.validators.js";
 import { HttpError } from "../utils/http-error.js";
 import { logger } from "../config/logger.js";
 import { llmService } from "./llm/orchestrator.js";
@@ -133,4 +137,56 @@ export async function generateTripContent(
     }
     throw err;
   }
+}
+
+export async function regenerateTripDay(
+  userId: string,
+  tripId: string,
+  dayParam: string,
+  dto: RegenerateDayDto,
+): Promise<PublicTrip> {
+  assertValidTripId(tripId);
+
+  const dayNumber = Number(dayParam);
+  if (!Number.isInteger(dayNumber) || dayNumber < 1) {
+    throw new HttpError(400, "BAD_REQUEST", "Day must be a positive whole number");
+  }
+
+  const trip = await Trip.findOne({ _id: tripId, user: userId });
+  if (!trip) throw TRIP_NOT_FOUND;
+  if (trip.status !== "ready") {
+    throw new HttpError(
+      409,
+      "TRIP_NOT_READY",
+      "Generate the itinerary before editing individual days",
+    );
+  }
+
+  const dayEntry = trip.itinerary.find((day) => day.day === dayNumber);
+  if (!dayEntry) {
+    throw new HttpError(404, "DAY_NOT_FOUND", `Trip has no day ${dayNumber}`);
+  }
+
+  const { result, servedBy } = await llmService.generateDay({
+    destination: trip.destination,
+    budgetType: trip.budgetType,
+    interests: trip.interests,
+    dayNumber,
+    totalDays: trip.days,
+    existingActivities: dayEntry.activities.map((activity) => ({
+      title: activity.title,
+      ...(activity.description ? { description: activity.description } : {}),
+      ...(activity.category ? { category: activity.category } : {}),
+    })),
+    ...(dto.instruction ? { instruction: dto.instruction } : {}),
+  });
+
+  dayEntry.activities = result.activities;
+  await trip.save();
+
+  logger.info(
+    { tripId, servedBy, day: dayNumber },
+    "Day regenerated",
+  );
+  return toPublicTrip(trip);
 }

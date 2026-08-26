@@ -1,10 +1,26 @@
 import Groq from "groq-sdk";
 import { env } from "../../config/env.js";
-import { ProviderError } from "./provider-error.js";
-import { buildUserPrompt, SYSTEM_INSTRUCTION, TRIP_JSON_CONTRACT } from "./prompts.js";
-import { generatedTripSchema, normalizeGeneratedTrip } from "./trip-schema.js";
-import { describeError } from "./gemini.provider.js";
-import type { GeneratedTrip, LlmProvider, TripGenerationInput } from "./types.js";
+import { ProviderError, describeProviderFailure } from "./provider-error.js";
+import {
+  buildDayPrompt,
+  buildUserPrompt,
+  DAY_JSON_CONTRACT,
+  SYSTEM_INSTRUCTION,
+  TRIP_JSON_CONTRACT,
+} from "./prompts.js";
+import {
+  generatedDayResultSchema,
+  generatedTripSchema,
+  normalizeGeneratedDay,
+  normalizeGeneratedTrip,
+} from "./trip-schema.js";
+import type {
+  DayGenerationInput,
+  GeneratedDay,
+  GeneratedTrip,
+  LlmProvider,
+  TripGenerationInput,
+} from "./types.js";
 
 export class GroqProvider implements LlmProvider {
   readonly name = "groq";
@@ -42,7 +58,31 @@ export class GroqProvider implements LlmProvider {
       const parsed = generatedTripSchema.parse(JSON.parse(rawText));
       return normalizeGeneratedTrip(parsed, input);
     } catch (err) {
-      throw new ProviderError(this.name, `Trip generation failed: ${describeError(err)}`);
+      throw new ProviderError(this.name, `Trip generation failed: ${describeProviderFailure(err)}`);
+    }
+  }
+
+  async generateDay(input: DayGenerationInput): Promise<GeneratedDay> {
+    try {
+      const completion = await this.client.chat.completions.create({
+        model: env.GROQ_MODEL,
+        temperature: 0.7,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: `${SYSTEM_INSTRUCTION}\n\n${DAY_JSON_CONTRACT}` },
+          { role: "user", content: buildDayPrompt(input) },
+        ],
+      });
+
+      const rawText = completion.choices[0]?.message?.content;
+      if (!rawText) {
+        throw new Error("Model returned an empty response");
+      }
+
+      const parsed = generatedDayResultSchema.parse(JSON.parse(rawText));
+      return normalizeGeneratedDay(parsed);
+    } catch (err) {
+      throw new ProviderError(this.name, `Day generation failed: ${describeProviderFailure(err)}`);
     }
   }
 }

@@ -34,3 +34,14 @@ export const updateTripSchema = z
 
 export type CreateTripDto = z.infer<typeof createTripSchema>;
 export type UpdateTripDto = z.infer<typeof updateTripSchema>;
+
+export const regenerateDaySchema = z.object({
+  instruction: z
+    .string()
+    .trim()
+    .min(1, "Instruction cannot be empty")
+    .max(300, "Instruction must be 300 characters or fewer")
+    .optional(),
+});
+
+export type RegenerateDayDto = z.infer<typeof regenerateDaySchema>;

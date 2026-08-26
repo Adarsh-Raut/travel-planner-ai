@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import type { GeneratedTrip, TripGenerationInput } from "./types.js";
+import type { GeneratedDay, GeneratedTrip, TripGenerationInput } from "./types.js";
 
 const generatedActivitySchema = z.object({
   title: z.string().trim().min(1).max(160),
@@ -33,6 +33,22 @@ export const generatedTripSchema = z.object({
 });
 
 export type RawGeneratedTrip = z.infer<typeof generatedTripSchema>;
+
+const generatedDayResultSchema = z.object({
+  activities: z.array(generatedActivitySchema).min(2).max(6),
+});
+
+export type RawGeneratedDay = z.infer<typeof generatedDayResultSchema>;
+export { generatedDayResultSchema };
+
+export function normalizeGeneratedDay(raw: RawGeneratedDay): GeneratedDay {
+  return {
+    activities: raw.activities.map((activity) => ({
+      id: randomUUID(),
+      ...activity,
+    })),
+  };
+}
 
 export function normalizeGeneratedTrip(
   raw: RawGeneratedTrip,

@@ -1,5 +1,9 @@
 import type { Request, Response } from "express";
-import { createTripSchema, updateTripSchema } from "../validators/trip.validators.js";
+import {
+  createTripSchema,
+  regenerateDaySchema,
+  updateTripSchema,
+} from "../validators/trip.validators.js";
 import * as tripService from "../services/trip.service.js";
 import { parseBody } from "../utils/validation.js";
 import { HttpError } from "../utils/http-error.js";
@@ -56,6 +60,18 @@ export async function generateTrip(req: Request, res: Response): Promise<void> {
   const trip = await tripService.generateTripContent(
     userId,
     requirePathParam(req, "id"),
+  );
+  res.json({ data: { trip } });
+}
+
+export async function regenerateTripDay(req: Request, res: Response): Promise<void> {
+  const userId = requireUserId(req);
+  const dto = parseBody(regenerateDaySchema, req.body ?? {});
+  const trip = await tripService.regenerateTripDay(
+    userId,
+    requirePathParam(req, "id"),
+    requirePathParam(req, "day"),
+    dto,
   );
   res.json({ data: { trip } });
 }

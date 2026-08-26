@@ -1,9 +1,35 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { env } from "../../config/env.js";
-import { ProviderError } from "./provider-error.js";
-import { buildUserPrompt, SYSTEM_INSTRUCTION } from "./prompts.js";
-import { generatedTripSchema, normalizeGeneratedTrip } from "./trip-schema.js";
-import type { GeneratedTrip, LlmProvider, TripGenerationInput } from "./types.js";
+import { ProviderError, describeProviderFailure } from "./provider-error.js";
+import {
+  buildDayPrompt,
+  buildUserPrompt,
+  SYSTEM_INSTRUCTION,
+} from "./prompts.js";
+import {
+  generatedDayResultSchema,
+  generatedTripSchema,
+  normalizeGeneratedDay,
+  normalizeGeneratedTrip,
+} from "./trip-schema.js";
+import type {
+  DayGenerationInput,
+  GeneratedDay,
+  GeneratedTrip,
+  LlmProvider,
+  TripGenerationInput,
+} from "./types.js";
+
+const ACTIVITY_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    title: { type: Type.STRING },
+    description: { type: Type.STRING },
+    category: { type: Type.STRING },
+  },
+  required: ["title", "description", "category"],
+  propertyOrdering: ["title", "description", "category"],
+};
 
 const RESPONSE_SCHEMA = {
   type: Type.OBJECT,
@@ -18,16 +44,7 @@ const RESPONSE_SCHEMA = {
             type: Type.ARRAY,
             minItems: 2,
             maxItems: 6,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                title: { type: Type.STRING },
-                description: { type: Type.STRING },
-                category: { type: Type.STRING },
-              },
-              required: ["title", "description", "category"],
-              propertyOrdering: ["title", "description", "category"],
-            },
+            items: ACTIVITY_SCHEMA,
           },
         },
         required: ["day", "activities"],
@@ -65,6 +82,20 @@ const RESPONSE_SCHEMA = {
   propertyOrdering: ["itinerary", "budget", "hotels"],
 } as const;
 
+const DAY_RESPONSE_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    activities: {
+      type: Type.ARRAY,
+      minItems: 2,
+      maxItems: 6,
+      items: ACTIVITY_SCHEMA,
+    },
+  },
+  required: ["activities"],
+  propertyOrdering: ["activities"],
+} as const;
+
 export class GeminiProvider implements LlmProvider {
   readonly name = "gemini";
 
@@ -99,16 +130,33 @@ export class GeminiProvider implements LlmProvider {
       const parsed = generatedTripSchema.parse(JSON.parse(rawText));
       return normalizeGeneratedTrip(parsed, input);
     } catch (err) {
-      throw new ProviderError(this.name, describeError(err));
+      throw new ProviderError(this.name, `Trip generation failed: ${describeProviderFailure(err)}`);
     }
   }
-}
 
-export function describeError(err: unknown): string {
-  if (err instanceof SyntaxError) return "Response was not valid JSON";
-  if (err instanceof Error && err.name === "ZodError") {
-    return "Response did not match the trip schema";
+  async generateDay(input: DayGenerationInput): Promise<GeneratedDay> {
+    try {
+      const response = await this.client.models.generateContent({
+        model: env.GEMINI_MODEL,
+        contents: buildDayPrompt(input),
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+          responseMimeType: "application/json",
+          responseSchema: DAY_RESPONSE_SCHEMA,
+          temperature: 0.7,
+          abortSignal: AbortSignal.timeout(45_000),
+        },
+      });
+
+      const rawText = response.text;
+      if (!rawText) {
+        throw new Error("Model returned an empty response");
+      }
+
+      const parsed = generatedDayResultSchema.parse(JSON.parse(rawText));
+      return normalizeGeneratedDay(parsed);
+    } catch (err) {
+      throw new ProviderError(this.name, `Day generation failed: ${describeProviderFailure(err)}`);
+    }
   }
-  if (err instanceof Error) return err.message;
-  return "Unknown error";
 }

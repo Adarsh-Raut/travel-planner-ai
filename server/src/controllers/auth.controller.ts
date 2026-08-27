@@ -9,7 +9,7 @@ import { HttpError } from "../utils/http-error.js";
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  sameSite: "lax",
+  sameSite: env.NODE_ENV === "production" ? "none" : "lax",
   secure: env.NODE_ENV === "production",
   path: "/",
 } as const;

@@ -49,7 +49,11 @@ export default function RegisterPage() {
       });
       router.push("/dashboard");
     } catch (err) {
-      if (err instanceof ApiError && err.isValidationError && err.details?.length) {
+      if (
+        err instanceof ApiError &&
+        err.isValidationError &&
+        err.details?.length
+      ) {
         setError(formatIssues(err.details));
       } else if (err instanceof ApiError) {
         setError(err.message);
@@ -65,7 +69,9 @@ export default function RegisterPage() {
     <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle className="text-2xl">Create your account</CardTitle>
-        <CardDescription>Start planning smarter trips in minutes.</CardDescription>
+        <CardDescription>
+          Start planning smarter trips in minutes.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
@@ -74,7 +80,7 @@ export default function RegisterPage() {
             <Input
               id="name"
               autoComplete="name"
-              placeholder="Adarsh"
+              placeholder="your name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={80}
@@ -119,7 +125,10 @@ export default function RegisterPage() {
 
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link
+            href="/login"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
             Sign in
           </Link>
         </p>

@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { CookieOptions, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
 import { AUTH } from "../config/auth.js";
@@ -7,12 +7,15 @@ import * as authService from "../services/auth.service.js";
 import { parseBody } from "../utils/validation.js";
 import { HttpError } from "../utils/http-error.js";
 
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-  secure: env.NODE_ENV === "production",
-  path: "/",
-} as const;
+function getCookieOptions(req: Request): CookieOptions {
+  const isHttps = req.secure || req.headers["x-forwarded-proto"] === "https";
+  return {
+    httpOnly: true,
+    sameSite: isHttps ? "none" : "lax",
+    secure: isHttps,
+    path: "/",
+  };
+}
 
 export async function register(req: Request, res: Response): Promise<void> {
   const dto = parseBody(registerSchema, req.body);
@@ -29,14 +32,14 @@ export async function login(req: Request, res: Response): Promise<void> {
   });
 
   res.cookie(AUTH.cookieName, token, {
-    ...COOKIE_OPTIONS,
+    ...getCookieOptions(req),
     maxAge: AUTH.cookieMaxAgeMs,
   });
   res.json({ data: { user: authService.toPublicUser(user) } });
 }
 
-export function logout(_req: Request, res: Response): void {
-  res.clearCookie(AUTH.cookieName, { ...COOKIE_OPTIONS });
+export function logout(req: Request, res: Response): void {
+  res.clearCookie(AUTH.cookieName, getCookieOptions(req));
   res.json({ data: { success: true } });
 }
 

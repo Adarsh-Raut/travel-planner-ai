@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Loader2, Sparkles, TriangleAlert } from "lucide-react";
+import { useAuth } from "@/components/providers/auth-provider";
 import { useTrip } from "@/hooks/use-trip";
 import type { Trip } from "@/lib/types";
 import { TripHeader } from "@/components/trip/trip-header";
@@ -25,6 +26,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function TripDetailPage() {
   const params = useParams<{ id: string }>();
+  const { status } = useAuth();
+  const router = useRouter();
   const {
     trip,
     loading,
@@ -39,6 +42,12 @@ export default function TripDetailPage() {
     shareTrip,
     revokeShare,
   } = useTrip(params.id);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login");
+    }
+  }, [status, router]);
 
   const [addingDay, setAddingDay] = useState<number | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);

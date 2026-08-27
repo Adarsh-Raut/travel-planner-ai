@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { MapPin } from "lucide-react";
+import { useAuth } from "@/components/providers/auth-provider";
 import { useTrips } from "@/hooks/use-trips";
 import { NewTripDialog } from "@/components/new-trip-dialog";
 import { TripCard } from "@/components/trip-card";
@@ -17,8 +19,16 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
+  const { status } = useAuth();
+  const router = useRouter();
   const { trips, loading, error, refresh, addTrip, removeTrip } = useTrips();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login");
+    }
+  }, [status, router]);
 
   async function handleDelete(tripId: string) {
     setDeletingId(tripId);

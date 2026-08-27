@@ -28,13 +28,21 @@ export class FailoverLlmService {
 
     for (const provider of this.providers) {
       lastProvider = provider.name;
+      const startedAt = Date.now();
       try {
         const result = await operation(provider);
-        logger.info({ provider: provider.name }, `${label} succeeded`);
+        logger.info(
+          { provider: provider.name, durationMs: Date.now() - startedAt },
+          `${label} succeeded`,
+        );
         return { result, servedBy: provider.name };
       } catch (err) {
         logger.warn(
-          { provider: provider.name, err: err instanceof Error ? err.message : String(err) },
+          {
+            provider: provider.name,
+            durationMs: Date.now() - startedAt,
+            err: err instanceof Error ? err.message : String(err),
+          },
           "LLM provider failed, trying next",
         );
       }

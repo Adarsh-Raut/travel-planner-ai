@@ -17,6 +17,12 @@ export function errorHandler(
   _next: NextFunction,
 ): void {
   if (err instanceof HttpError) {
+    if (err.status >= 500) {
+      logger.error({ err, status: err.status }, "Server error");
+    } else {
+      logger.warn({ status: err.status, code: err.code }, "Client error");
+    }
+
     const body: ErrorBody = {
       error: { code: err.code, message: err.message },
     };

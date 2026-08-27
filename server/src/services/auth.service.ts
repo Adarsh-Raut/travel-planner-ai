@@ -7,6 +7,7 @@ import {
 } from "../models/user.model.js";
 import type { LoginDto, RegisterDto } from "../validators/auth.validators.js";
 import { HttpError } from "../utils/http-error.js";
+import { logger } from "../config/logger.js";
 
 const BCRYPT_SALT_ROUNDS = 12;
 
@@ -32,6 +33,7 @@ export async function registerUser(dto: RegisterDto): Promise<PublicUser> {
       email: dto.email,
       passwordHash,
     });
+    logger.info({ userId: user._id.toString(), email: dto.email }, "auth.register");
     return toPublicUser(user);
   } catch (err) {
     if (isDuplicateKeyError(err)) {
@@ -60,6 +62,7 @@ export async function loginUser(dto: LoginDto): Promise<UserDocument> {
   const passwordMatches = await bcrypt.compare(dto.password, user.passwordHash);
   if (!passwordMatches) throw invalidCredentials;
 
+  logger.info({ userId: user._id.toString(), email: dto.email }, "auth.login");
   return user;
 }
 

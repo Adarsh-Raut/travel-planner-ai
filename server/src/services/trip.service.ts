@@ -70,6 +70,7 @@ export async function createTrip(
     interests: dto.interests,
     ...(dto.title ? { title: dto.title } : {}),
   });
+  logger.info({ tripId: trip._id.toString(), destination: dto.destination, days: dto.days }, "trip.created");
   return toPublicTrip(trip);
 }
 
@@ -111,6 +112,7 @@ export async function updateTrip(
     { new: true },
   );
   if (!trip) throw TRIP_NOT_FOUND;
+  logger.info({ tripId }, "trip.updated");
   return toPublicTrip(trip);
 }
 
@@ -118,6 +120,7 @@ export async function deleteTrip(userId: string, tripId: string): Promise<void> 
   assertValidTripId(tripId);
   const { deletedCount } = await Trip.deleteOne({ _id: tripId, user: userId });
   if (deletedCount === 0) throw TRIP_NOT_FOUND;
+  logger.info({ tripId }, "trip.deleted");
 }
 
 export async function generateTripContent(
@@ -143,6 +146,7 @@ export async function generateTripContent(
   }
 
   try {
+    const startedAt = Date.now();
     const result = await llmService.generateTrip({
       destination: claimed.destination,
       days: claimed.days,
@@ -157,8 +161,8 @@ export async function generateTripContent(
     await claimed.save();
 
     logger.info(
-      { tripId, servedBy: result.servedBy, days: result.trip.itinerary.length },
-      "Trip content generated",
+      { tripId, servedBy: result.servedBy, days: result.trip.itinerary.length, durationMs: Date.now() - startedAt },
+      "trip.generated",
     );
     return toPublicTrip(claimed);
   } catch (err) {
@@ -181,6 +185,7 @@ export async function regenerateTripDay(
   const { trip, dayEntry } = await findReadyTripDay(userId, tripId, dayParam);
   const dayNumber = dayEntry.day;
 
+  const startedAt = Date.now();
   const { result, servedBy } = await llmService.generateDay({
     destination: trip.destination,
     budgetType: trip.budgetType,
@@ -199,8 +204,8 @@ export async function regenerateTripDay(
   await trip.save();
 
   logger.info(
-    { tripId, servedBy, day: dayNumber },
-    "Day regenerated",
+    { tripId, servedBy, day: dayNumber, durationMs: Date.now() - startedAt },
+    "trip.day.regenerated",
   );
   return toPublicTrip(trip);
 }
@@ -231,6 +236,7 @@ export async function addActivity(
   });
   await trip.save();
 
+  logger.info({ tripId, day: dayEntry.day }, "activity.added");
   return toPublicTrip(trip);
 }
 
@@ -252,6 +258,7 @@ export async function removeActivity(
   dayEntry.activities.splice(index, 1);
   await trip.save();
 
+  logger.info({ tripId, day: dayEntry.day, activityId }, "activity.removed");
   return toPublicTrip(trip);
 }
 
@@ -287,6 +294,7 @@ export async function enableSharing(
   if (!trip.shareToken) {
     trip.shareToken = randomBytes(24).toString("base64url");
     await trip.save();
+    logger.info({ tripId }, "share.created");
   }
 
   return { token: trip.shareToken };
@@ -298,6 +306,7 @@ export async function revokeSharing(userId: string, tripId: string): Promise<voi
     { _id: tripId, user: userId },
     { $unset: { shareToken: 1 } },
   );
+  logger.info({ tripId }, "share.revoked");
 }
 
 export async function getSharedTrip(token: string): Promise<SharedTripView> {
@@ -306,6 +315,8 @@ export async function getSharedTrip(token: string): Promise<SharedTripView> {
     .select("-user -shareToken -status -createdAt -updatedAt");
 
   if (!trip) throw SHARE_NOT_FOUND;
+
+  logger.info({ token: token.slice(0, 8) }, "share.viewed");
 
   const ownerName = (trip.user as { name?: string } | null)?.name;
 

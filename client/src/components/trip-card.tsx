@@ -53,9 +53,9 @@ export function TripCard({ trip, onDelete, deletePending }: TripCardProps) {
       <Link
         href={`/trips/${trip.id}`}
         aria-label={`Open trip ${trip.title ?? trip.destination}`}
-        className="absolute inset-0 rounded-xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        className="absolute inset-0 z-10 rounded-xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       />
-      <CardHeader className="relative">
+      <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg leading-snug">
             {trip.title ?? trip.destination}
@@ -88,7 +88,7 @@ export function TripCard({ trip, onDelete, deletePending }: TripCardProps) {
         </div>
       </CardContent>
 
-      <CardFooter className="relative justify-between">
+      <CardFooter className="justify-between">
         <span className="text-xs text-muted-foreground">
           Created{" "}
           {new Date(trip.createdAt).toLocaleDateString(undefined, {
@@ -104,7 +104,7 @@ export function TripCard({ trip, onDelete, deletePending }: TripCardProps) {
               size="icon"
               aria-label={`Delete trip to ${trip.destination}`}
               disabled={deletePending}
-              className="text-muted-foreground hover:text-destructive"
+              className="relative z-20 text-muted-foreground hover:text-destructive"
             >
               <Trash2 />
             </Button>

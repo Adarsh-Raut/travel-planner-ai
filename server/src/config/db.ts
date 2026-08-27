@@ -9,7 +9,7 @@ export async function connectDatabase(uri: string): Promise<void> {
   });
 
   mongoose.connection.on("error", (err) => {
-    logger.error("MongoDB connection error:", err.message);
+    logger.error({ err }, "MongoDB connection error");
   });
 
   mongoose.connection.on("disconnected", () => {

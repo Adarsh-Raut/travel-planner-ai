@@ -22,6 +22,10 @@ export function createApp(): Express {
   app.use(
     pinoHttp({
       logger,
+      serializers: {
+        req: (req) => ({ method: req.method, url: req.url }),
+        res: (res) => ({ statusCode: res.statusCode }),
+      },
       redact: {
         paths: ["req.headers.cookie", "req.headers.authorization", "req.body.password"],
         censor: "[REDACTED]",

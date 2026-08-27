@@ -51,7 +51,7 @@ export function TripHeader({ trip, onShare }: TripHeaderProps) {
         </div>
         {onShare && trip.status === "ready" ? (
           <Button variant="outline" size="sm" onClick={onShare}>
-            {trip.isShared ? "Share settings" : "Share"}
+            Share
           </Button>
         ) : null}
       </div>

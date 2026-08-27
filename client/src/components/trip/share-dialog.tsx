@@ -16,7 +16,6 @@ interface ShareDialogProps {
   url: string | null;
   creating: boolean;
   revoking: boolean;
-  isShared: boolean;
   onCreate: () => void;
   onRevoke: () => void;
   onClose: () => void;
@@ -26,14 +25,15 @@ export function ShareDialog({
   url,
   creating,
   revoking,
-  isShared,
   onCreate,
   onRevoke,
   onClose,
 }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
 
-  if (!isShared && !url) return null;
+  function handleOpenChange(open: boolean) {
+    if (!open) onClose();
+  }
 
   async function copy() {
     if (!url) return;
@@ -47,7 +47,7 @@ export function ShareDialog({
   }
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={url !== null} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Share this trip</DialogTitle>

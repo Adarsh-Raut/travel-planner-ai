@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
-import type { Trip } from "@/lib/types";
+import type { BudgetType, Trip } from "@/lib/types";
 
 const POLL_INTERVAL_MS = 3000;
 
@@ -164,6 +164,31 @@ export function useTrip(tripId: string) {
     }
   }, [tripId]);
 
+  const updateTrip = useCallback(
+    async (fields: {
+      destination?: string;
+      days?: number;
+      budgetType?: BudgetType;
+      interests?: string[];
+    }): Promise<boolean> => {
+      setMutationError(null);
+      try {
+        const { data } = await api<{ data: { trip: Trip } }>(
+          `/api/trips/${tripId}`,
+          { method: "PATCH", body: fields },
+        );
+        setTrip(data.trip);
+        return true;
+      } catch (err) {
+        setMutationError(
+          err instanceof ApiError ? err.message : "Could not update trip.",
+        );
+        return false;
+      }
+    },
+    [tripId],
+  );
+
   const revokeShare = useCallback(async (): Promise<boolean> => {
     setMutationError(null);
     try {
@@ -187,6 +212,7 @@ export function useTrip(tripId: string) {
     generating,
     generate,
     mutationError,
+    updateTrip,
     addActivity,
     removeActivity,
     regenerateDay,

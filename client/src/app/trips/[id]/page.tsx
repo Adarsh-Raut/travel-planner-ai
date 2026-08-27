@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Loader2, Sparkles, TriangleAlert } from "lucide-react";
 import { useTrip } from "@/hooks/use-trip";
+import type { Trip } from "@/lib/types";
 import { TripHeader } from "@/components/trip/trip-header";
+import { EditTripForm } from "@/components/trip/edit-trip-form";
 import { DayCard } from "@/components/trip/day-card";
 import { BudgetCard } from "@/components/trip/budget-card";
 import { HotelsSection } from "@/components/trip/hotels-section";
@@ -30,6 +32,7 @@ export default function TripDetailPage() {
     generating,
     generate,
     mutationError,
+    updateTrip,
     addActivity,
     removeActivity,
     regenerateDay,
@@ -44,6 +47,7 @@ export default function TripDetailPage() {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareCreating, setShareCreating] = useState(false);
   const [shareRevoking, setShareRevoking] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
   async function handleAdd(dayNumber: number, title: string): Promise<boolean> {
     setAddingDay(dayNumber);
@@ -101,6 +105,20 @@ export default function TripDetailPage() {
     setShareUrl(null);
   }
 
+  async function handleUpdate(fields: {
+    destination?: string;
+    days?: number;
+    budgetType?: "low" | "medium" | "high";
+    interests?: string[];
+  }): Promise<boolean> {
+    setUpdating(true);
+    try {
+      return await updateTrip(fields);
+    } finally {
+      setUpdating(false);
+    }
+  }
+
   if (loading) {
     return (
       <main className="mx-auto w-full max-w-5xl flex-1 space-y-4 p-6">
@@ -141,10 +159,12 @@ export default function TripDetailPage() {
         <TripHeader trip={trip} />
         <StatusPanel
           status={trip.status}
-          destination={trip.destination}
+          trip={trip}
           generating={generating}
           error={error}
           onGenerate={() => void generate()}
+          onUpdate={handleUpdate}
+          saving={updating}
         />
       </main>
     );
@@ -192,7 +212,6 @@ export default function TripDetailPage() {
         url={shareUrl}
         creating={shareCreating}
         revoking={shareRevoking}
-        isShared={trip.isShared}
         onCreate={() => void handleOpenShare()}
         onRevoke={handleRevokeShare}
         onClose={onCloseShare}
@@ -203,16 +222,25 @@ export default function TripDetailPage() {
 
 function StatusPanel({
   status,
-  destination,
+  trip,
   generating,
   error,
   onGenerate,
+  onUpdate,
+  saving,
 }: {
   status: "draft" | "generating" | "failed";
-  destination: string;
+  trip: Trip;
   generating: boolean;
   error: string | null;
   onGenerate: () => void;
+  onUpdate: (fields: {
+    destination?: string;
+    days?: number;
+    budgetType?: "low" | "medium" | "high";
+    interests?: string[];
+  }) => Promise<boolean>;
+  saving: boolean;
 }) {
   if (status === "generating") {
     return (
@@ -257,14 +285,20 @@ function StatusPanel({
         <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-accent text-accent-foreground">
           <Sparkles />
         </div>
-        <CardTitle>Ready to plan {destination}?</CardTitle>
+        <CardTitle>Ready to plan {trip.destination}?</CardTitle>
         <CardDescription>
           The AI builds a day-by-day itinerary with budget estimates and hotel
           suggestions. It takes under a minute.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex justify-center pb-6">
-        <Button size="lg" onClick={onGenerate} disabled={generating}>
+      <CardContent className="space-y-6 pb-6">
+        <EditTripForm
+          trip={trip}
+          onSave={onUpdate}
+          saving={saving}
+          error={null}
+        />
+        <Button size="lg" onClick={onGenerate} disabled={generating} className="w-full">
           {generating ? (
             <>
               <Loader2 data-icon="inline-start" className="animate-spin" />
